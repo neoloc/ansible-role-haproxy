@@ -790,6 +790,44 @@ None
               - check
               - backup
 ```
+## Dynamic Backend or Listen segments
+
+A dynamic backend can be configured like so.
+
+Add into the `group_vars/groupname.yml` file:
+
+```yaml
+# haproxy server groups
+haproxy_server_group:
+  be_git-domain-tld:
+    name: "{{ hostname.fqdn }}"
+    address: "{{ custom.interfaces.net.ipv4.addr }}"
+    port: 3000
+    params:
+      - "cookie {{ hostname.hostname }}"
+      - check
+      - 'inter 2s'
+      - 'rise 3'
+      - 'fall 2'
+```
+
+In the haproxy servers variables (in my case `group_vars/haproxy_group01.yml`), define a backend as follows:
+
+```yaml
+haproxy_backend:
+  - name: be_git-domain-tld
+  description: 'Backend for Gitea: git.domain.local'
+    option:
+      - httpchk
+    http_check: send meth GET uri /
+    raw_options:
+      - 'redirect scheme https if !{ ssl_fc }'
+    bind_process:
+      - 1
+    mode: http
+    balance: roundrobin
+    server_group: gitea_group01
+```
 
 ## Overriding configuration template
 

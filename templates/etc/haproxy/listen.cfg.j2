@@ -131,10 +131,18 @@ listen {{ listen.name }}
   default-server {% for param in listen.default_server_params | default([]) %} {{ param }}{% endfor %}
 
 {% endif %}
+{% if listen.server_group is defined %}
+{% for host in groups[listen.server_group] %}
+{% set host_be = hostvars[host]['haproxy_server_group'][listen.name] %}
+  server {{ host_be.name }} {{ host_be.address }}:{{ host_be.port }}{% for param in host_be.params | default([]) %} {{ param }}{% endfor %}
+
+{% endfor %}
+{% else %}
 {% for server in listen.server | default([]) %}
   server {{ server.name }} {{ server.listen }}{% for param in server.param | default([]) %} {{ param }}{% endfor %}
 
 {% endfor %}
+{% endif %}
 {% if listen.server_template is defined %}
   server-template {{ listen.server_template.name }} {{ listen.server_template.num}} {{ listen.server_template.fqdn }}{% if listen.server_template.port is defined %}:{{ listen.server_template.port }}{% endif %} {% for param in listen.server_template.param | default([]) %} {{ param }}{% endfor %}
 

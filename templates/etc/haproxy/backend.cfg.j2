@@ -110,10 +110,18 @@ backend {{ backend.name }}
   default-server {% for param in backend.default_server_params | default([]) %} {{ param }}{% endfor %}
 
 {% endif %}
+{% if backend.server_group is defined %}
+{% for host in groups[backend.server_group] %}
+{% set host_be = hostvars[host]['haproxy_server_group'][backend.name] %}
+  server {{ host_be.name }} {{ host_be.address }}:{{ host_be.port }}{% for param in host_be.params | default([]) %} {{ param }}{% endfor %}
+
+{% endfor %}
+{% else %}
 {% for server in backend.server | default([]) %}
   server {{ server.name }} {{ server.listen }}{% for param in server.param | default([]) %} {{ param }}{% endfor %}
 
 {% endfor %}
+{% endif %}
 {% for server_dynamic in backend.server_dynamic | default([]) %}
 {% for server_name in groups[server_dynamic.group] %}
 {% set server = hostvars[server_name] %}
